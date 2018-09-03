@@ -59,6 +59,21 @@ namespace ToPasteBin
             return pastes.ToArray();
         }
 
+        public string GetRawPaste(Paste paste)
+        {
+            string id = "/" + paste.Key;
+            string response = SendRequest("https://pastebin.com/raw" + id, new Dictionary<string, string>());
+            return response;
+        }
+
+        public string GetRawPaste(string pasteUrl)
+        {
+            var url = new Uri(pasteUrl);
+            string id = url.AbsolutePath;
+            string response = SendRequest("https://pastebin.com/raw" + id, new Dictionary<string, string>());
+            return response;
+        }
+
         public string CreatePaste(string title, string content)
         {
             var dataDic = new Dictionary<string, string>()
