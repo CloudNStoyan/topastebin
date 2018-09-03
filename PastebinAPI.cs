@@ -62,7 +62,7 @@ namespace ToPasteBin
         public string GetRawPaste(Paste paste)
         {
             string id = "/" + paste.Key;
-            string response = SendRequest("https://pastebin.com/raw" + id, new Dictionary<string, string>());
+            string response = SendRequest("https://pastebin.com/raw" + id);
             return response;
         }
 
@@ -70,7 +70,7 @@ namespace ToPasteBin
         {
             var url = new Uri(pasteUrl);
             string id = url.AbsolutePath;
-            string response = SendRequest("https://pastebin.com/raw" + id, new Dictionary<string, string>());
+            string response = SendRequest("https://pastebin.com/raw" + id);
             return response;
         }
 
@@ -140,6 +140,24 @@ namespace ToPasteBin
                 streamWriter.Write(postData);
                 streamWriter.Flush();
             }
+            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+            {
+                var responseText = streamReader.ReadToEnd();
+                return responseText;
+                //Now you have your response.
+                //or false depending on information in the response     
+            }
+        }
+
+        private static string SendRequest(string url)
+        {
+            string webAddr = url;
+
+            var httpWebRequest = (HttpWebRequest)WebRequest.Create(webAddr);
+            httpWebRequest.ContentType = "application/x-www-form-urlencoded";
+            httpWebRequest.Method = "GET";
+
             var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
             using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
             {
