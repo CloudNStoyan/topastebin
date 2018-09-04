@@ -15,6 +15,7 @@ namespace ToPasteBin
     {
         private string Key { get; }
         private string UserId { get; set; }
+        private bool AsGuest { get; set; }
 
         public PastebinAPI(string key,string username,string password)
         {
@@ -22,16 +23,35 @@ namespace ToPasteBin
             this.UserId = this.GetUserId(username, password);
         }
 
-        public PastebinAPI()
+        public PastebinAPI(string path)
         {
-            string json = File.ReadAllText("../../apisettings.json");
+            if (!File.Exists(path))
+            {
+                throw new Exception("There is no existing file with path " + path);
+            }
+            string json = File.ReadAllText(path);
             var config = JsonConvert.DeserializeObject<Config>(json);
             this.Key = config.Key;
             this.UserId = this.GetUserId(config.Username, config.Password);
         }
 
+        public PastebinAPI(string key,bool asGuest)
+        {
+            if (asGuest == false)
+            {
+                throw new Exception("You need to give the username and password to post as a user!");
+            }
+
+            this.Key = key;
+        }
+
         public Paste[] GetPastes()
         {
+            if (this.AsGuest)
+            {
+                throw new Exception("You need to log in an account not as guest!");
+            }
+
             var dataDic = new Dictionary<string, string>()
             {
                 {"api_dev_key", this.Key},
@@ -76,15 +96,29 @@ namespace ToPasteBin
 
         public string CreatePaste(string title, string content)
         {
-            var dataDic = new Dictionary<string, string>()
+            Dictionary<string, string> dataDic;
+            if (this.AsGuest)
             {
-                {"api_dev_key", this.Key},
-                {"api_user_key", this.UserId},
-                {"api_option", "paste"},
-                {"api_paste_code", content},
-                {"api_paste_name", title},
-                {"api_paste_private", "1"}
-            };
+                dataDic = new Dictionary<string, string>()
+                {
+                    {"api_dev_key", this.Key},
+                    {"api_user_key", this.UserId},
+                    {"api_option", "paste"},
+                    {"api_paste_code", content},
+                    {"api_paste_name", title},
+                    {"api_paste_private", "1"}
+                };
+            }
+            else
+            {
+                dataDic = new Dictionary<string, string>()
+                {
+                    {"api_dev_key", this.Key},
+                    {"api_option", "paste"},
+                    {"api_paste_code", content},
+                    {"api_paste_name", title},
+                };
+            }
 
             return SendRequest("https://pastebin.com/api/api_post.php", dataDic);
         }
